@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "Privacy Policy Analyzer",
+  "version": "1.0",
+  "description": "Automated analysis of privacy policies.",
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "cookies"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["analyzer.js", "analyzer-worker.js", "storage.js", "ui-renderer.js", "insights-generator.js", "cookie-analyzer.js"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

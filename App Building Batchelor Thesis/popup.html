@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { box-sizing: border-box; }
+        
+        body {
+            width: 550px;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            color: #2c3e50;
+            background: #f8f9fa;
+        }
+
+        /* HEADER */
+        .header {
+            background: linear-gradient(135deg, #0056b3 0%, #003d82 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h2 { margin: 0 0 8px 0; font-size: 18px; font-weight: 700; }
+        .header p { margin: 0; font-size: 12px; opacity: 0.9; }
+
+        /* TAB NAVIGATION */
+        .tabs {
+            display: flex;
+            background: white;
+            border-bottom: 3px solid #e0e0e0;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 14px;
+            text-align: center;
+            background: white;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .tab:hover {
+            background: #f5f5f5;
+        }
+
+        .tab.active {
+            color: #0056b3;
+            background: white;
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #0056b3;
+        }
+
+        /* CONTAINER */
+        .container {
+            display: none;
+            padding: 16px;
+            min-height: 400px;
+        }
+
+        .container.active {
+            display: block;
+        }
+
+        /* ACTION BUTTON */
+        .action-btn {
+            width: 100%;
+            padding: 12px;
+            background: #0056b3;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-bottom: 12px;
+        }
+
+        .action-btn:hover {
+            background: #003d82;
+        }
+
+        .action-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        /* SECONDARY BUTTONS */
+        .btn-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn-row button {
+            flex: 1;
+            min-width: 100px;
+            padding: 8px 12px;
+            background: #e0e0e0;
+            border: none;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            color: #333;
+            transition: background 0.2s;
+        }
+
+        .btn-row button:hover {
+            background: #d0d0d0;
+        }
+
+        /* STATUS MESSAGE */
+        .status {
+            padding: 10px 12px;
+            margin-bottom: 12px;
+            border-radius: 5px;
+            font-size: 12px;
+            display: none;
+            border-left: 4px solid #0056b3;
+            background: #e3f2fd;
+            color: #0056b3;
+        }
+
+        .status.show {
+            display: block;
+        }
+
+        .status.error {
+            border-left-color: #d32f2f;
+            background: #ffebee;
+            color: #d32f2f;
+        }
+
+        .status.success {
+            border-left-color: #388e3c;
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        /* SCORE CARD */
+        .score-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-left: 5px solid #0056b3;
+        }
+
+        .score-label {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .score-value {
+            font-size: 42px;
+            font-weight: 700;
+            color: #0056b3;
+        }
+
+        .score-out-of {
+            font-size: 14px;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        /* RISK ASSESSMENT */
+        .risk-box {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-left: 5px solid #ff6b6b;
+        }
+
+        .risk-title {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .risk-description {
+            font-size: 12px;
+            line-height: 1.6;
+            color: #555;
+            margin-bottom: 8px;
+        }
+
+        .risk-items {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            font-size: 12px;
+        }
+
+        .risk-items li {
+            padding: 6px 0;
+            color: #666;
+        }
+
+        .risk-items li::before {
+            content: "• ";
+            color: #ff6b6b;
+            font-weight: bold;
+            margin-right: 6px;
+        }
+
+        /* RECOMMENDATIONS */
+        .recommendations-box {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-left: 5px solid #ffc107;
+        }
+
+        .recommendations-box h4 {
+            margin: 0 0 12px 0;
+            font-size: 13px;
+            font-weight: 700;
+            color: #f57f17;
+        }
+
+        .recommendations-box ul {
+            margin: 0;
+            padding-left: 20px;
+            list-style: none;
+        }
+
+        .recommendations-box li {
+            font-size: 12px;
+            line-height: 1.5;
+            padding: 4px 0;
+            color: #666;
+        }
+
+        .recommendations-box li::before {
+            content: "✓ ";
+            color: #f57f17;
+            font-weight: bold;
+            margin-right: 6px;
+        }
+
+        /* FILTER SECTION */
+        .filter-section {
+            background: white;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .filter-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #999;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .filter-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .filter-btn {
+            padding: 6px 12px;
+            background: #f0f0f0;
+            border: 2px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            color: #555;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover {
+            border-color: #0056b3;
+            color: #0056b3;
+        }
+
+        .filter-btn.active {
+            background: #0056b3;
+            color: white;
+            border-color: #0056b3;
+        }
+
+        /* COLLAPSIBLE SECTIONS */
+        .collapsible-section {
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        .collapsible-header {
+            padding: 14px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            color: #0056b3;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8f9fa;
+            border: none;
+            width: 100%;
+            transition: background 0.2s;
+        }
+
+        .collapsible-header:hover {
+            background: #f0f0f0;
+        }
+
+        .collapsible-arrow {
+            font-size: 16px;
+            transition: transform 0.2s;
+        }
+
+        .collapsible-content {
+            padding: 14px;
+            display: block;
+            border-top: 1px solid #eee;
+        }
+
+        .collapsible-content.collapsed {
+            display: none;
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .metric-row:last-child {
+            border-bottom: none;
+        }
+
+        .metric-label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .metric-value {
+            color: #0056b3;
+            font-weight: 700;
+        }
+
+        /* FLAG ITEMS */
+        .flag-item {
+            background: #ffebee;
+            border-left: 4px solid #ff6b6b;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+
+        .flag-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .flag-text {
+            font-weight: 600;
+            color: #c62828;
+            margin-bottom: 4px;
+        }
+
+        .flag-meta {
+            font-size: 11px;
+            color: #999;
+        }
+
+        /* COOKIE ANALYSIS */
+        .cookie-result {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .cookie-risk-level {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            font-weight: 600;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        .cookie-risk-high {
+            background: #ffebee;
+            color: #c62828;
+            border-left: 4px solid #ff6b6b;
+        }
+
+        .cookie-risk-medium {
+            background: #fff3e0;
+            color: #e65100;
+            border-left: 4px solid #ff9800;
+        }
+
+        .cookie-risk-low {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-left: 4px solid #4caf50;
+        }
+
+        .cookie-section {
+            margin-bottom: 12px;
+        }
+
+        .cookie-section-title {
+            font-weight: 600;
+            font-size: 12px;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .cookie-breakdown {
+            font-size: 12px;
+        }
+
+        .cookie-item {
+            padding: 6px 0;
+            color: #666;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .cookie-item:last-child {
+            border-bottom: none;
+        }
+
+        .cookie-concerns {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            font-size: 12px;
+        }
+
+        .cookie-concerns li {
+            padding: 6px 0;
+            color: #666;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .cookie-concerns li:last-child {
+            border-bottom: none;
+        }
+
+        .cookie-concerns li::before {
+            content: "⚠ ";
+            color: #ff6b6b;
+            margin-right: 6px;
+        }
+
+        /* PANELS (History, Stats) - Now Modals */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            padding: 12px;
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding-top: 60px;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            width: 100%;
+            max-width: 480px;
+            max-height: 70vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s;
+        }
+
+        .modal-close:hover {
+            color: #333;
+        }
+
+        .modal-item {
+            padding: 12px;
+            margin-bottom: 8px;
+            background: #f8f9fa;
+            border-left: 4px solid #0056b3;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .modal-item:hover {
+            background: #f0f0f0;
+            border-left-color: #003d82;
+        }
+
+        .modal-item-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .modal-item-meta {
+            font-size: 11px;
+            color: #999;
+        }
+
+        .modal-stat {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px;
+            margin-bottom: 8px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .modal-stat-label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .modal-stat-value {
+            color: #0056b3;
+            font-weight: 700;
+        }
+
+        .modal-action {
+            width: 100%;
+            padding: 10px;
+            margin-top: 12px;
+            background: #e0e0e0;
+            border: none;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            color: #333;
+            transition: background 0.2s;
+        }
+
+        .modal-action:hover {
+            background: #d0d0d0;
+        }
+
+        .panel {
+            display: none;
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            margin-bottom: 16px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .panel.show {
+            display: block;
+        }
+
+        .panel h4 {
+            margin: 0 0 12px 0;
+            font-size: 13px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .panel-item {
+            padding: 10px;
+            margin-bottom: 8px;
+            background: #f8f9fa;
+            border-left: 3px solid #0056b3;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .panel-item:hover {
+            background: #f0f0f0;
+        }
+
+        .panel-item-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .panel-item-meta {
+            font-size: 11px;
+            color: #999;
+        }
+
+        /* EMPTY STATE */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 40px;
+            margin-bottom: 12px;
+        }
+
+        .empty-state-text {
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        /* SCROLLBAR */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <div class="header">
+        <h2>🔒 Privacy Analyzer</h2>
+        <p>Analyze privacy policies & cookies for risky data practices</p>
+    </div>
+
+    <!-- TAB NAVIGATION -->
+    <div class="tabs">
+        <button class="tab active" id="policyTab">Policy</button>
+        <button class="tab" id="cookiesTab">Cookies</button>
+    </div>
+
+    <!-- POLICY TAB -->
+    <div class="container active" id="policyContainer">
+        <div class="status" id="status"></div>
+
+        <button class="action-btn" id="analyzeBtn">Analyze Privacy Policy</button>
+
+        <div class="btn-row">
+            <button id="historyBtn">History</button>
+            <button id="statsBtn">Stats</button>
+            <button id="exportJsonBtn">Export JSON</button>
+            <button id="exportCsvBtn">Export CSV</button>
+        </div>
+
+        <!-- RESULTS AREA -->
+        <div id="resultsArea" style="display: none;">
+            <!-- Score Card -->
+            <div class="score-card">
+                <div class="score-label">Privacy Score</div>
+                <div class="score-value" id="finalScore">-</div>
+                <div class="score-out-of">/ 10</div>
+            </div>
+
+            <!-- Risk Assessment -->
+            <div class="risk-box" id="riskBox" style="display: none;">
+                <div class="risk-title">
+                    <span id="riskEmoji"></span>
+                    <span id="riskLevel">Privacy Risk Assessment</span>
+                </div>
+                <p class="risk-description" id="policySummary"></p>
+                <ul class="risk-items" id="riskItems"></ul>
+            </div>
+
+            <!-- Recommendations -->
+            <div class="recommendations-box" id="recommendationsBox" style="display: none;">
+                <h4>📋 What You Should Do</h4>
+                <ul id="recommendationsList"></ul>
+            </div>
+
+            <!-- Filter Controls -->
+            <div class="filter-section" id="filterSection" style="display: none;">
+                <div class="filter-label">Filter Flags</div>
+                <div class="filter-buttons" id="filterControls"></div>
+            </div>
+
+            <!-- Keyword Mentions -->
+            <div class="collapsible-section">
+                <button class="collapsible-header" id="keywordToggle">
+                    <span>📊 Keyword Mentions</span>
+                    <span class="collapsible-arrow" id="keywordArrow">▼</span>
+                </button>
+                <div class="collapsible-content" id="keywordContent">
+                    <div class="metric-row">
+                        <span class="metric-label">Data Collection</span>
+                        <span class="metric-value" id="metricCollection">0</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Third-Party Sharing</span>
+                        <span class="metric-value" id="metricSharing">0</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">User Rights</span>
+                        <span class="metric-value" id="metricRights">0</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Data Retention</span>
+                        <span class="metric-value" id="metricRetention">0</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Consent Requirements</span>
+                        <span class="metric-value" id="metricConsent">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Collection Breakdown -->
+            <div class="collapsible-section">
+                <button class="collapsible-header" id="collectionToggle">
+                    <span>📦 Data Collection Breakdown</span>
+                    <span class="collapsible-arrow" id="collectionArrow">▼</span>
+                </button>
+                <div class="collapsible-content" id="collectionContent">
+                    <div class="metric-row">
+                        <span class="metric-label">Mandatory Collection</span>
+                        <span class="metric-value" id="collectionMandatory">0</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Optional Collection</span>
+                        <span class="metric-value" id="collectionOptional">0</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Undeclared Collection</span>
+                        <span class="metric-value" id="collectionUndeclared">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Specific Flags -->
+            <div class="collapsible-section">
+                <button class="collapsible-header" id="flagsToggle">
+                    <span>🚩 Specific Flags Found</span>
+                    <span class="collapsible-arrow" id="flagsArrow">▼</span>
+                </button>
+                <div class="collapsible-content" id="flagsContent">
+                    <div id="flagsContainer"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- EMPTY STATE -->
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <div class="empty-state-icon">🔍</div>
+            <div class="empty-state-text">Click "Analyze Privacy Policy" to begin</div>
+        </div>
+    </div>
+
+    <!-- HISTORY MODAL -->
+    <div class="modal" id="historyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📜 Analysis History</h3>
+                <button class="modal-close" id="closeHistoryBtn">✕</button>
+            </div>
+            <div id="historyList"></div>
+            <button class="modal-action" id="clearHistoryBtn">Clear All History</button>
+        </div>
+    </div>
+
+    <!-- STATS MODAL -->
+    <div class="modal" id="statsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📊 Statistics</h3>
+                <button class="modal-close" id="closeStatsBtn">✕</button>
+            </div>
+            <div id="statisticsContent"></div>
+        </div>
+    </div>
+
+    <!-- COOKIES TAB -->
+    <div class="container" id="cookiesContainer">
+        <div class="status" id="cookieStatus"></div>
+
+        <button class="action-btn" id="analyzeCookiesBtn">Analyze Cookies</button>
+
+        <div class="cookie-result" id="cookieAnalysisBox" style="display: none;">
+            <div id="cookieRiskLevel"></div>
+            <div class="cookie-section">
+                <div class="cookie-section-title">🍪 Cookie Breakdown</div>
+                <div class="cookie-breakdown" id="cookieBreakdown"></div>
+            </div>
+            <div class="cookie-section">
+                <div class="cookie-section-title">⚠️ Privacy Concerns</div>
+                <ul class="cookie-concerns" id="cookieDiscrepancies"></ul>
+            </div>
+        </div>
+
+        <!-- EMPTY STATE -->
+        <div class="empty-state" id="cookieEmptyState" style="display: none;">
+            <div class="empty-state-icon">🍪</div>
+            <div class="empty-state-text">Click "Analyze Cookies" to scan browser cookies for privacy risks</div>
+        </div>
+    </div>
+
+    <!-- HISTORY PANEL (Legacy - kept for reference) -->
+    <div class="panel" id="historyPanel" style="display: none;">
+        <h4>📜 Analysis History</h4>
+        <div id="historyList2"></div>
+        <button id="clearHistoryBtn2" class="btn-row" style="width: 100%; margin-top: 8px;">Clear History</button>
+    </div>
+
+    <!-- STATS PANEL (Legacy - kept for reference) -->
+    <div class="panel" id="statsPanel" style="display: none;">
+        <div id="statisticsContent2"></div>
+    </div>
+
+    <!-- OLD COOKIES SECTION -->
+    <div style="display: none;">
+        <!-- EMPTY STATE -->
+        <div class="empty-state" id="cookieEmptyState2" style="display: none;">
+            <div class="empty-state-icon">🔍</div>
+            <div class="empty-state-text">Click "Analyze Privacy Policy" to begin</div>
+        </div>
+    </div>
+
+    <!-- COOKIE ANALYSIS SECTION (Old - for reference)
+    <div id="cookieAnalysisBox2" class="cookie-box" style="display: none;">
+        <h4>Cookie Analysis</h4>
+        <div class="cookie-risk" id="cookieRiskLevel2"></div>
+        <div class="cookie-section">
+            <strong>Cookie Breakdown:</strong>
+            <div class="cookie-breakdown" id="cookieBreakdown2"></div>
+        </div>
+        <div class="cookie-section">
+            <strong>Privacy Concerns:</strong>
+            <ul class="cookie-concerns" id="cookieDiscrepancies2"></ul>
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="analyzer.js"></script>
+    <script src="storage.js"></script>
+    <script src="insights-generator.js"></script>
+    <script src="cookie-analyzer.js"></script>
+    <script src="ui-renderer.js"></script>
+    <script src="popup.js"></script>
+</body>
+</html>
