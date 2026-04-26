@@ -108,6 +108,9 @@ class CookieAnalyzer {
 
             const categorized = this.categorizeCookies(relevantCookies);
             const riskAssessment = this.assessRisk(categorized);
+            const recommendations = this.generateRecommendations(categorized, riskAssessment);
+            const persistence = this.analyzePersistence(categorized);
+            const thirdParty = this.detectThirdParty(relevantCookies);
 
             return {
                 status: 'success',
@@ -116,8 +119,13 @@ class CookieAnalyzer {
                 totalCookies: relevantCookies.length,
                 riskLevel: riskAssessment.level,
                 riskScore: riskAssessment.score,
+                riskExplanation: riskAssessment.explanation,
                 breakdown: this.getBreakdown(categorized),
-                discrepancies: this.findPolicyDiscrepancies(categorized)
+                discrepancies: this.findPolicyDiscrepancies(categorized),
+                recommendations: recommendations,
+                persistence: persistence,
+                thirdPartyTrackers: thirdParty,
+                privacyScore: this.calculatePrivacyScore(categorized, thirdParty)
             };
         } catch (error) {
             console.error('[CookieAnalyzer] Error:', error);
@@ -178,6 +186,7 @@ class CookieAnalyzer {
     static assessRisk(categorized) {
         let riskScore = 0;
         let riskLevel = 'LOW';
+        let explanation = '';
 
         // Tracking cookies = high risk (4 points each)
         riskScore += categorized.tracking.length * 4;
@@ -196,13 +205,16 @@ class CookieAnalyzer {
 
         if (normalizedScore >= 70) {
             riskLevel = 'HIGH';
+            explanation = `High risk detected: ${categorized.tracking.length} tracking + ${categorized.advertising.length} advertising cookies detected`;
         } else if (normalizedScore >= 40) {
             riskLevel = 'MEDIUM';
+            explanation = `Moderate risk: Mix of analytics and tracking cookies found`;
         } else {
             riskLevel = 'LOW';
+            explanation = `Low risk: Mostly functional cookies detected`;
         }
 
-        return { score: normalizedScore, level: riskLevel };
+        return { score: normalizedScore, level: riskLevel, explanation: explanation };
     }
 
     static getBreakdown(categorized) {
@@ -244,5 +256,121 @@ class CookieAnalyzer {
         }
 
         return discrepancies;
+    }
+
+    static generateRecommendations(categorized, riskAssessment) {
+        const recommendations = [];
+
+        if (riskAssessment.level === 'HIGH') {
+            recommendations.push({
+                priority: 'critical',
+                text: '🚨 HIGH RISK: Consider disabling cookies or using incognito mode on this site',
+                action: 'Review the site\'s privacy policy carefully before proceeding'
+            });
+        }
+
+        if (categorized.tracking.length > 3) {
+            recommendations.push({
+                priority: 'high',
+                text: '⚠️  Multiple tracking cookies detected',
+                action: 'Use browser privacy settings or a cookie manager to limit tracking'
+            });
+        }
+
+        if (categorized.advertising.length > 0) {
+            recommendations.push({
+                priority: 'medium',
+                text: '📊 This site uses advertising cookies for targeted ads',
+                action: 'Adjust advertising preferences in your browser settings'
+            });
+        }
+
+        if (categorized.social.length > 0) {
+            recommendations.push({
+                priority: 'medium',
+                text: '👥 Social media trackers detected',
+                action: 'Consider blocking social media integrations on privacy-focused browsers'
+            });
+        }
+
+        if (categorized.functional.length > 0) {
+            recommendations.push({
+                priority: 'low',
+                text: '✅ Functional cookies detected (these are necessary)',
+                action: 'These cookies help the site work - safe to accept'
+            });
+        }
+
+        if (recommendations.length === 0) {
+            recommendations.push({
+                priority: 'low',
+                text: '✅ Cookie usage appears normal',
+                action: 'No major privacy concerns detected'
+            });
+        }
+
+        return recommendations;
+    }
+
+    static analyzePersistence(categorized) {
+        const now = Math.floor(Date.now() / 1000);
+        let shortTerm = 0;
+        let longTerm = 0;
+        let veryLongTerm = 0;
+
+        const allCookies = [
+            ...categorized.tracking,
+            ...categorized.analytics,
+            ...categorized.advertising,
+            ...categorized.functional,
+            ...categorized.social,
+            ...categorized.other
+        ];
+
+        allCookies.forEach(cookie => {
+            if (!cookie.expiry) return;
+            const daysRemaining = (cookie.expiry - now) / 86400;
+            
+            if (daysRemaining > 365) veryLongTerm++;
+            else if (daysRemaining > 30) longTerm++;
+            else shortTerm++;
+        });
+
+        return {
+            shortTerm,
+            longTerm,
+            veryLongTerm,
+            analysis: `${veryLongTerm} cookies persist for >1 year (high tracking risk), ${longTerm} for 1+ months, ${shortTerm} expire soon`
+        };
+    }
+
+    static detectThirdParty(cookies) {
+        const thirdParty = [];
+        const knownTrackers = ['google', 'facebook', 'meta', 'amazon', 'doubleclick', 'criteo', 'twitter', 'linkedin'];
+
+        cookies.forEach(cookie => {
+            const domain = cookie.domain.toLowerCase();
+            if (knownTrackers.some(tracker => domain.includes(tracker)) && !domain.includes('localhost')) {
+                thirdParty.push({
+                    name: cookie.name,
+                    company: knownTrackers.find(t => domain.includes(t)),
+                    domain: domain,
+                    purpose: 'Third-party tracking'
+                });
+            }
+        });
+
+        return thirdParty;
+    }
+
+    static calculatePrivacyScore(categorized, thirdParty) {
+        let score = 100; // Start with perfect score
+
+        score -= categorized.tracking.length * 10; // Tracking cookies = -10 each
+        score -= categorized.advertising.length * 5; // Ads = -5 each
+        score -= thirdParty.length * 8; // Third-party trackers = -8 each
+        score -= categorized.analytics.length * 3; // Analytics = -3 each
+
+        return Math.max(0, score); // Don't go below 0
     }
 }

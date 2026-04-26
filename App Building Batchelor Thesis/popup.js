@@ -1,8 +1,43 @@
 // Global variables
 let isAnalysisInProgress = false;
 let currentPageUrl = '';
+let cookieBannerDetected = false;
 
-// Tab switching
+// Check if opened due to cookie banner detection
+function checkForCookieBannerAlert() {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs.length === 0) return;
+        
+        const tabId = tabs[0].id;
+        chrome.action.getBadgeText({ tabId: tabId }, (badgeText) => {
+            if (badgeText === '🍪') {
+                cookieBannerDetected = true;
+                
+                // Show alert banner
+                const alertBanner = document.getElementById('cookieAlert');
+                if (alertBanner) {
+                    alertBanner.classList.add('show');
+                }
+                
+                // Highlight cookies tab with pulsing red background
+                const cookiesTab = document.getElementById('cookiesTab');
+                if (cookiesTab) {
+                    cookiesTab.classList.add('cookie-alert-active');
+                }
+                
+                // Auto-switch to cookies tab with delay for effect
+                setTimeout(() => {
+                    switchTab('cookies');
+                }, 600);
+                
+                // Auto-trigger cookie analysis
+                setTimeout(() => {
+                    document.getElementById('analyzeCookiesBtn')?.click();
+                }, 1200);
+            }
+        });
+    });
+}
 document.getElementById('policyTab')?.addEventListener('click', () => {
     switchTab('policy');
 });
@@ -229,6 +264,9 @@ window.addEventListener('load', () => {
     if (resultsArea) resultsArea.style.display = 'none';
     if (cookieEmptyState) cookieEmptyState.style.display = 'block';
     if (cookieBox) cookieBox.style.display = 'none';
+    
+    // Check if popup was opened due to cookie banner detection
+    checkForCookieBannerAlert();
 });
 
 // Close modals via close button

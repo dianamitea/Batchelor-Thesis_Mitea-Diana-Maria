@@ -392,26 +392,102 @@ try {
                     discrepanciesHTML = '<li>No major discrepancies found between cookies and policy</li>';
                 }
                 
+                // Determine risk styling with prominent indicators
                 let riskColor = '#2e7d32';
+                let riskIcon = '✅';
+                let riskBgColor = '#e8f5e9';
+                
                 if (cookieResult.riskLevel === 'HIGH') {
                     riskColor = '#d32f2f';
+                    riskIcon = '⚠️ WARNING';
+                    riskBgColor = '#ffebee';
                 } else if (cookieResult.riskLevel === 'MEDIUM') {
-                    riskColor = '#f57c00';
+                    riskIcon = '⚡ CAUTION';
+                    riskColor = '#fbc02d';
+                    riskBgColor = '#fffde7';
+                } else {
+                    riskIcon = '✅ SAFE';
                 }
                 
-                // Build complete HTML
+                // Build recommendations HTML
+                let recommendationsHTML = '';
+                if (cookieResult.recommendations && cookieResult.recommendations.length > 0) {
+                    recommendationsHTML = cookieResult.recommendations
+                        .map(rec => `
+                            <div style="margin: 8px 0; padding: 8px; background: #f5f5f5; border-left: 3px solid ${rec.priority === 'critical' ? '#d32f2f' : rec.priority === 'high' ? '#fbc02d' : '#2e7d32'}; border-radius: 3px; font-size: 11px;">
+                                <strong>${rec.text}</strong><br>
+                                <span style="color: #666;">→ ${rec.action}</span>
+                            </div>
+                        `).join('');
+                }
+                
+                // Build persistence HTML
+                let persistenceHTML = '';
+                if (cookieResult.persistence) {
+                    persistenceHTML = `
+                        <div style="margin: 8px 0; padding: 8px; background: #fff3cd; border-radius: 3px; border-left: 3px solid #fbc02d; font-size: 11px;">
+                            <strong>⏱️ Cookie Persistence:</strong><br>
+                            ${cookieResult.persistence.analysis}
+                        </div>
+                    `;
+                }
+                
+                // Build third-party HTML
+                let thirdPartyHTML = '';
+                if (cookieResult.thirdPartyTrackers && cookieResult.thirdPartyTrackers.length > 0) {
+                    thirdPartyHTML = `
+                        <div style="margin: 8px 0; padding: 8px; background: #ffebee; border-radius: 3px; border-left: 3px solid #d32f2f; font-size: 11px;">
+                            <strong>🔴 Third-Party Trackers Detected:</strong>
+                            <ul style="margin: 6px 0; padding-left: 18px;">
+                                ${cookieResult.thirdPartyTrackers.slice(0, 5).map(t => 
+                                    `<li><strong>${t.company.toUpperCase()}</strong> (${t.domain})</li>`
+                                ).join('')}
+                                ${cookieResult.thirdPartyTrackers.length > 5 ? `<li>... and ${cookieResult.thirdPartyTrackers.length - 5} more</li>` : ''}
+                            </ul>
+                        </div>
+                    `;
+                }
+                
+                // Privacy score visual
+                let privacyScoreColor = '#2e7d32';
+                if (cookieResult.privacyScore < 30) privacyScoreColor = '#d32f2f';
+                else if (cookieResult.privacyScore < 60) privacyScoreColor = '#fbc02d';
+                
+                // Build complete HTML with enhanced details
                 const fullHTML = `
-                    <h4 style="margin: 0 0 12px 0; color: #2e7d32; font-size: 14px;">Cookie Analysis</h4>
-                    <div style="margin-bottom: 12px; padding: 8px; background: white; border-radius: 3px; font-weight: bold; color: ${riskColor};">
-                        Found ${cookieResult.totalCookies} cookies | Risk Level: ${cookieResult.riskLevel}
+                    <h4 style="margin: 0 0 12px 0; color: #2e7d32; font-size: 14px;">🍪 Detailed Cookie Analysis</h4>
+                    
+                    <div style="margin-bottom: 12px; padding: 12px; background: ${riskBgColor}; border-radius: 6px; border-left: 4px solid ${riskColor}; font-weight: bold; color: ${riskColor}; font-size: 14px; text-align: center;">
+                        ${riskIcon} • Risk Level: ${cookieResult.riskLevel}
                     </div>
+                    
+                    <div style="margin-bottom: 12px; padding: 10px; background: white; border-radius: 6px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <div style="border-left: 3px solid #0056b3; padding-left: 8px;">
+                            <span style="font-size: 11px; color: #666;">Total Cookies</span><br>
+                            <strong style="font-size: 16px; color: #0056b3;">${cookieResult.totalCookies}</strong>
+                        </div>
+                        <div style="border-left: 3px solid ${privacyScoreColor}; padding-left: 8px;">
+                            <span style="font-size: 11px; color: #666;">Privacy Score</span><br>
+                            <strong style="font-size: 16px; color: ${privacyScoreColor};">${cookieResult.privacyScore || 0}/100</strong>
+                        </div>
+                    </div>
+                    
                     <div style="margin-bottom: 10px;">
-                        <strong style="font-size: 12px;">Cookie Breakdown:</strong>
+                        <strong style="font-size: 12px; display: block; margin-bottom: 6px;">📊 Cookie Breakdown:</strong>
                         ${breakdownHTML}
                     </div>
+                    
+                    ${persistenceHTML}
+                    ${thirdPartyHTML}
+                    
                     <div style="margin-bottom: 10px;">
-                        <strong style="font-size: 12px;">Privacy Concerns:</strong>
-                        <ul style="margin: 8px 0; padding-left: 20px; font-size: 12px;">
+                        <strong style="font-size: 12px; display: block; margin-bottom: 6px;">💡 Recommendations:</strong>
+                        ${recommendationsHTML || '<p style="font-size: 11px; color: #666;">No major recommendations</p>'}
+                    </div>
+                    
+                    <div style="margin-bottom: 10px;">
+                        <strong style="font-size: 12px; display: block; margin-bottom: 6px;">⚠️ Privacy Concerns:</strong>
+                        <ul style="margin: 8px 0; padding-left: 20px; font-size: 11px;">
                             ${discrepanciesHTML}
                         </ul>
                     </div>
@@ -420,7 +496,7 @@ try {
                 console.log('[UIRenderer] Setting cookie box HTML, length:', fullHTML.length);
                 cookieBox.innerHTML = fullHTML;
                 cookieBox.style.display = 'block';
-                console.log('[UIRenderer] ✅ DISPLAYED COOKIE ANALYSIS BOX');
+                console.log('[UIRenderer] ✅ DISPLAYED ENHANCED COOKIE ANALYSIS');
                 
             } catch (error) {
                 console.error('[UIRenderer] Error rendering cookie analysis:', error);
