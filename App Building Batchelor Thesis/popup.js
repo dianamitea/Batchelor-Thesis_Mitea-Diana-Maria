@@ -241,7 +241,8 @@ document.getElementById('analyzeCookiesBtn')?.addEventListener('click', async ()
         document.getElementById('cookieEmptyState').style.display = 'none';
 
         const cookieStatus = document.getElementById('cookieStatus');
-        cookieStatus.textContent = `Found ${cookieResult.totalCookies} cookies - Risk: ${cookieResult.riskLevel}`;
+        const storageLabel = cookieResult.storageType === 'localStorage' ? 'localStorage entries' : 'cookies';
+        cookieStatus.textContent = `Found ${cookieResult.totalCookies} ${storageLabel} - Risk: ${cookieResult.riskLevel}`;
         cookieStatus.className = `status show ${cookieResult.riskLevel === 'HIGH' ? 'error' : 'success'}`;
     } catch (error) {
         const cookieStatus = document.getElementById('cookieStatus');

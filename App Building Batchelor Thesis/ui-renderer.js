@@ -370,6 +370,12 @@ try {
                 }
                 
                 // Build HTML for results
+                const isLocalStorage = cookieResult.storageType === 'localStorage';
+                const storageNote = isLocalStorage
+                    ? `<div style="margin-bottom:10px;padding:6px 10px;background:#fff3e0;border-left:3px solid #ff9800;border-radius:4px;font-size:11px;color:#e65100;">
+                        ⚠️ No HTTP cookies found. Analysis is based on <strong>localStorage/sessionStorage</strong> entries — this site avoids HTTP cookies to evade standard cookie tools.
+                       </div>`
+                    : '';
                 let breakdownHTML = '';
                 if (cookieResult.breakdown) {
                     const bd = cookieResult.breakdown;
@@ -392,21 +398,30 @@ try {
                     discrepanciesHTML = '<li>No major discrepancies found between cookies and policy</li>';
                 }
                 
-                // Determine risk styling with prominent indicators
+                // Determine compliance/risk styling
                 let riskColor = '#2e7d32';
                 let riskIcon = '✅';
                 let riskBgColor = '#e8f5e9';
-                
-                if (cookieResult.riskLevel === 'HIGH') {
-                    riskColor = '#d32f2f';
-                    riskIcon = '⚠️ WARNING';
-                    riskBgColor = '#ffebee';
-                } else if (cookieResult.riskLevel === 'MEDIUM') {
-                    riskIcon = '⚡ CAUTION';
-                    riskColor = '#fbc02d';
+                const compliance = cookieResult.complianceStatus || (cookieResult.riskLevel === 'LOW' ? 'COMPLIANT' : cookieResult.riskLevel);
+
+                if (compliance === 'NON-COMPLIANT') {
+                    riskColor = '#b71c1c';
+                    riskIcon = '🚨 NON-COMPLIANT';
+                    riskBgColor = '#ffcdd2';
+                } else if (compliance === 'OPT-OUT IGNORED') {
+                    riskColor = '#4a148c';
+                    riskIcon = '❌ OPT-OUT IGNORED';
+                    riskBgColor = '#ede7f6';
+                } else if (compliance === 'HIGH RISK') {
+                    riskColor = '#e65100';
+                    riskIcon = '⚠️ HIGH RISK';
+                    riskBgColor = '#fff3e0';
+                } else if (compliance === 'MODERATE RISK') {
+                    riskIcon = '⚡ MODERATE RISK';
+                    riskColor = '#f57f17';
                     riskBgColor = '#fffde7';
                 } else {
-                    riskIcon = '✅ SAFE';
+                    riskIcon = '✅ COMPLIANT';
                 }
                 
                 // Build recommendations HTML
@@ -456,10 +471,16 @@ try {
                 // Build complete HTML with enhanced details
                 const fullHTML = `
                     <h4 style="margin: 0 0 12px 0; color: #2e7d32; font-size: 14px;">🍪 Detailed Cookie Analysis</h4>
-                    
+                    ${storageNote}
                     <div style="margin-bottom: 12px; padding: 12px; background: ${riskBgColor}; border-radius: 6px; border-left: 4px solid ${riskColor}; font-weight: bold; color: ${riskColor}; font-size: 14px; text-align: center;">
                         ${riskIcon} • Risk Level: ${cookieResult.riskLevel}
                     </div>
+                    ${cookieResult.riskExplanation ? `
+                    <div style="margin-bottom: 12px; padding: 10px; background: ${riskBgColor}; border-radius: 6px; font-size: 11px; color: ${riskColor};">
+                        ${cookieResult.riskExplanation}
+                        ${cookieResult.consentStatus && !cookieResult.consentStatus.found ? '<br><br><em>No consent cookie detected. This site may be collecting data before asking permission.</em>' : ''}
+                        ${cookieResult.consentStatus && cookieResult.consentStatus.found ? `<br><br><em>Consent cookie found: <strong>${cookieResult.consentStatus.cookieName}</strong> = ${cookieResult.consentStatus.accepted === true ? '✅ Accepted' : cookieResult.consentStatus.accepted === false ? '❌ Rejected' : '❓ Unknown'}</em>` : ''}
+                    </div>` : ''}
                     
                     <div style="margin-bottom: 12px; padding: 10px; background: white; border-radius: 6px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                         <div style="border-left: 3px solid #0056b3; padding-left: 8px;">
